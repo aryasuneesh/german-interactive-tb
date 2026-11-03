@@ -37,6 +37,7 @@ function finish(el, ctx, score, total) {
   L.ex[ctx.key] = Math.max(L.ex[ctx.key] || 0, pct);
   Store.bump('exercises');
   ctx.onScore && ctx.onScore(pct);
+  if (ctx.mix && App.Mix) App.Mix.record(ctx.mix, pct);
 }
 const fb = (ok, msg) => `<div class="fb ${ok ? 'ok' : 'bad'}">${msg}</div>`;
 
@@ -242,6 +243,29 @@ const R = {
         if (sel[i] === ans) ok++;
       });
       el.querySelector('.textbox').hidden = false;
+      finish(el, ctx, ok, ex.items.length);
+    };
+    return el;
+  },
+
+  build(ex, ctx) {
+    const rows = ex.items.map((it, i) => `<div class="ex-item" data-i="${i}"><div class="small"><b>${i + 1}.</b> ${U.esc(it.prompt)}</div>
+      <div class="row"><input type="text" class="inp" style="flex:1;min-width:220px" autocomplete="off" spellcheck="false" placeholder="Schreiben Sie den Satz …"><button type="button" class="icon-btn" data-play title="hear the answer">▶</button></div><div class="fbx"></div></div>`).join('');
+    const el = shell(ex, ctx, '<p class="small muted">Build the sentence from the parts. Conjugate the verb, put the noun in the right case, and keep the verb in position 2 (or 1 in a yes/no question, and the second verb part at the end).</p>' + rows);
+    el.querySelector('.ex-head').appendChild(umlautBar());
+    el.querySelectorAll('[data-i]').forEach((row) => {
+      const it = ex.items[row.dataset.i];
+      row.querySelector('[data-play]').onclick = () => play(it.a);
+      row.querySelector('input').addEventListener('keydown', (e) => { if (e.key === 'Enter') el.querySelector('[data-check]').click(); });
+    });
+    el.querySelector('[data-check]').onclick = () => {
+      let ok = 0;
+      ex.items.forEach((it, i) => {
+        const row = el.querySelector(`[data-i="${i}"]`), inp = row.querySelector('input');
+        const r = U.check(inp.value, [it.a]);
+        inp.classList.toggle('ok', r.ok); inp.classList.toggle('bad', !r.ok); if (r.ok) ok++;
+        row.querySelector('.fbx').innerHTML = r.ok ? fb(true, '✓ ' + U.esc(it.a)) : fb(false, `→ <b>${U.esc(it.a)}</b>${r.close ? ' (almost!)' : ''}`);
+      });
       finish(el, ctx, ok, ex.items.length);
     };
     return el;

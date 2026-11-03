@@ -17,7 +17,12 @@ DE.bank = (lessonId, group, text) => {
     if (t === 'p') return P(rest, en, ex);
     return W(rest, en, ex);
   });
-  l.vocab.push({ group, items, extra: true });
+  // skip words that already exist anywhere in the course (no duplicate cards)
+  const key = (v) => (v.t === 'n' ? DE.nounDe(v) : v.w).toLowerCase();
+  if (!DE._seen) { DE._seen = new Set(); for (const id of DE.order) for (const g of DE.lessons[id].vocab) for (const v of g.items) DE._seen.add(key(v)); }
+  const fresh = items.filter((v) => !DE._seen.has(key(v)));
+  fresh.forEach((v) => DE._seen.add(key(v)));
+  if (fresh.length) l.vocab.push({ group, items: fresh, extra: true });
 };
 const M = (n) => `Themenwortschatz Modul ${n} · `;
 

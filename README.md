@@ -45,9 +45,11 @@ js/exercises.js       13 exercise types (incl. pronunciation)
 js/drill.js           Pimsleur engine
 js/grammar.js         rule-based declension (4 cases, der/ein/kein, weak nouns), conjugation (Präsens/Präteritum/Perfekt/Imperativ), comparison
 js/forms.js           "Formen" panels + generated Kasus/Konjugation drills
+js/mix.js             13 generated mix & match drill types + sentence builder, Mix page (adaptive)
 js/app.js             views + router
 data/syllabus.js      48-lesson syllabus, weekly plan, exam formats
-data/themes.js        Themenwortschatz: extra words per Modul theme
+data/themes.js        Themenwortschatz: extra words per Modul theme (wave 1)
+data/themes2.js       Themenwortschatz wave 2
 data/lessons/*.js     lesson content (one file per Lektion; arbeitsbuch.js adds the AB tasks)
 docs/SYLLABUS.md      research & method
 ```

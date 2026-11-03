@@ -103,12 +103,20 @@ const PERSON = wordRe(`mr mrs man woman men women boy girl child baby human pers
   American Mexican Brazilian Japanese Frenchman Frenchwoman Turk Chinese Russian Pole house_husband housewife business_partner`);
 const PLACE = wordRe(`station airport pool museum café cafe restaurant club bar pub cinema theatre office room kitchen bathroom toilet garden park school university uni hospital shop bank hotel supermarket bakery butcher's church street
   square lake sea beach mountain forest city town country flat apartment house library canteen platform stop market stadium zoo opera factory workshop practice surgery cellar balcony hallway corridor hall gym island
-  village river bridge car_park petrol_station crossroads inn cathedral palace lido department_store pharmacy post_office town_hall living_room bedroom study meadow lecture_hall furniture_store disco gardens`);
+  village river bridge car_park petrol_station crossroads inn cathedral palace lido department_store pharmacy post_office town_hall living_room bedroom study meadow lecture_hall furniture_store disco gardens
+  store parlour hostel campsite reception centre gallery tower castle monument kiosk snack_bar garage`);
 const FOOD = wordRe(`food drink bread roll butter cheese sausage ham egg milk muesli yoghurt fruit apple orange banana lemon vegetables tomato potato onion salad lettuce fish meat rice pasta noodles soup roast cake chocolate ice_cream
   cream sugar salt coffee tea water mineral_water juice beer wine honey jam pepper carrot cucumber cabbage mushroom pea bean garlic spinach pear grape strawberry cherry pineapple melon plum nut chicken beef pork steak flour
   oil vinegar mustard sauce spice pizza hamburger chips fries dumpling goulash strudel schnitzel pudding sandwich pretzel lemonade starter main_course dessert breakfast lunch dinner meal mash gateau`);
 const TIME = wordRe(`monday tuesday wednesday thursday friday saturday sunday weekend morning afternoon evening night noon january february march april may june july august september october november december spring summer autumn
   winter season day week month year hour minute second moment semester holiday birthday break christmas easter new_year's_eve new_year's_day time_of_day`);
+const ABSTRACT = wordRe(`rent price time desire wish idea fun stress help love friendship marriage health illness appearance character origin wedding contact greeting discount offer celebration party festival trip journey holiday holidays
+  tradition atmosphere mood surprise application interview studies training apprenticeship internship exam work job position profession lesson lecture seminar meeting conference appointment order assignment project contract salary
+  problem question answer language accent nationality citizenship status age weather rain snow wind temperature degree traffic delay departure arrival direction generation relatives life routine household laundry music sport
+  film series hobby fun hunger thirst appetite diet cold fever pain anniversary dance congratulations event fireworks parade experience homeland abroad kind section department mark grade subject degree qualification certificate
+  homework housework break farewell goodbye caution announcement view network love service everyday`);
+G.head = (v) => { const first = (v.en || '').toLowerCase().replace(/\(.*?\)/g, ' ').split(/[;,/]/)[0].trim(); return (first.match(/[a-z'äöüé-]+(?=[^a-z'äöüé-]*$)/) || [first])[0]; };
+G.wordRe = wordRe;
 G.category = (v, groupName = '') => {
   if (v.cat) return v.cat;
   const en = (v.en || '').toLowerCase().replace(/\(.*?\)/g, (m) => (/\((m|f)\b/.test(m) ? ' person ' : ' ')), gn = groupName;
@@ -116,13 +124,14 @@ G.category = (v, groupName = '') => {
   if (/Tageszeit|Wochentag|Monate|Jahreszeit/.test(gn)) return 'time';
   if (/\bperson\b/.test(first) && /\((m|f)\b/.test(v.en || '')) return 'person';
   const head = (first.match(/[a-z'äöüé-]+(?=[^a-z'äöüé-]*$)/) || [first])[0];
-  for (const t of [head, first]) {
-    if (PERSON.test(t)) return 'person';
-    if (PLACE.test(t)) return 'place';
-    if (FOOD.test(t)) return 'food';
-    if (TIME.test(t)) return 'time';
-    if (t === head && /^(ticket|cupboard|party|taxi|tree|break|glass|number|railway|egg|card|machine|clock|book|game|ride)$/.test(head)) return 'thing';
-  }
+  if (PERSON.test(head) || PERSON.test(first)) return 'person';
+  if (TIME.test(head)) return 'time';
+  if (PLACE.test(head)) return 'place';
+  if (FOOD.test(head)) return 'food';
+  if (ABSTRACT.test(head)) return 'abstract';
+  if (/^(ticket|cupboard|taxi|tree|glass|number|railway|egg|card|machine|clock|book|game|ride|map)$/.test(head)) return 'thing';
+  if (TIME.test(first)) return 'time';
+  if (ABSTRACT.test(first)) return 'abstract';
   return 'thing';
 };
 /* example sentences per case. Each returns {sg:[...], pl:[...]} sentences with the form in <b> */
@@ -149,6 +158,10 @@ G.examples = (v, groupName) => {
       sg: [`${b(cap(D.sg?.[0] || ''))} ist sehr schön.`, `Ich suche ${b(D.sg?.[1])}. · Ich finde ${b(D.sg?.[1])} toll.`, `Wir treffen uns vor ${b(D.sg?.[2])}. · Ich wohne neben ${b(D.sg?.[2])}.`, `Die Adresse ${b(D.sg?.[3])} ist neu.`],
       pl: [`${b(cap(D.pl?.[0] || ''))} sind schön.`, `Ich besuche ${b(D.pl?.[1])}.`, `Wir sprechen von ${b(D.pl?.[2])}.`, `Die Adressen ${b(D.pl?.[3])} sind neu.`],
     },
+    abstract: {
+      sg: [`${b(cap(D.sg?.[0] || ''))} ist wichtig.`, `Ich finde ${b(D.sg?.[1])} interessant. · Ich mag ${b(D.sg?.[1])}.`, `Wir sprechen von ${b(D.sg?.[2])}. · Was denkst du von ${b(D.sg?.[2])}?`, `Das ist das Problem ${b(D.sg?.[3])}.`],
+      pl: [`${b(cap(D.pl?.[0] || ''))} sind wichtig.`, `Ich finde ${b(D.pl?.[1])} interessant.`, `Wir sprechen von ${b(D.pl?.[2])}.`, `Das ist das Problem ${b(D.pl?.[3])}.`],
+    },
     time: {
       sg: [`${b(cap(D.sg?.[0] || ''))} beginnt bald.`, `Ich warte auf ${b(D.sg?.[1])}. · Ich finde ${b(D.sg?.[1])} schön.`, `Seit ${b(D.sg?.[2])} lerne ich Deutsch.`, `Am Ende ${b(D.sg?.[3])} bin ich müde.`],
       pl: [`${b(cap(D.pl?.[0] || ''))} sind kurz.`, `Ich mag ${b(D.pl?.[1])}.`, `Seit ${b(D.pl?.[2])} warte ich.`, `Am Ende ${b(D.pl?.[3])} …`],
@@ -163,6 +176,7 @@ G.frames = {
   thing: [[0, 'sg', '{X} ist neu.'], [1, 'sg', 'Ich brauche {X}.'], [2, 'sg', 'Ich schreibe mit {X}.'], [1, 'sg', 'Ich habe {X} gekauft.'], [3, 'sg', 'Die Farbe {X} ist schön.'], [2, 'pl', 'Was machst du mit {X}?'], [1, 'pl', 'Ich suche {X}.']],
   food: [[0, 'sg', '{X} schmeckt gut.'], [1, 'sg', 'Ich möchte {X}.'], [2, 'sg', 'Ich koche mit {X}.'], [1, 'sg', 'Ich kaufe {X}.'], [2, 'pl', 'Ich mache einen Salat mit {X}.'], [1, 'pl', 'Ich esse gern {X}.']],
   place: [[0, 'sg', '{X} ist sehr schön.'], [1, 'sg', 'Ich suche {X}.'], [2, 'sg', 'Wir treffen uns vor {X}.'], [2, 'sg', 'Ich komme gerade von {X}.'], [3, 'sg', 'Die Adresse {X} ist neu.'], [1, 'pl', 'Ich mag {X}.']],
+  abstract: [[0, 'sg', '{X} ist wichtig.'], [1, 'sg', 'Ich finde {X} interessant.'], [2, 'sg', 'Wir sprechen von {X}.'], [3, 'sg', 'Das ist das Problem {X}.'], [1, 'pl', 'Ich mag {X}.']],
   time: [[0, 'sg', '{X} beginnt bald.'], [1, 'sg', 'Ich warte auf {X}.'], [2, 'sg', 'Seit {X} lerne ich Deutsch.'], [3, 'sg', 'Am Ende {X} bin ich müde.']],
 };
 G.FRAME_ARTICLE = { 'Ich brauche {X}.': 'indef', 'Ich möchte {X}.': 'indef', 'Ich habe {X} gekauft.': 'indef', 'Ich besuche {X}.': 'def' };
@@ -203,7 +217,7 @@ const HABEN_OVERRIDE = new Set(['bekommen', 'verstehen', 'bestehen', 'entstehen?
 const SEP_SEIN_STEMS = new Set(['stehen']); // aufstehen = sein, verstehen = haben
 
 const NOT_SEP = new Set(['antworten', 'analysieren', 'umarmen', 'abonnieren', 'beantworten', 'anstrengen?']);
-STRONG.raten = ['rät', 'riet', 'geraten']; STRONG.schlagen = ['schlägt', 'schlug', 'geschlagen']; STRONG.braten = ['brät', 'briet', 'gebraten'];
+STRONG.raten = ['rät', 'riet', 'geraten']; STRONG.werben = ['wirbt', 'warb', 'geworben']; STRONG.schlagen = ['schlägt', 'schlug', 'geschlagen']; STRONG.braten = ['brät', 'briet', 'gebraten'];
 STRONG.reiten = ['reitet', 'ritt', 'geritten']; STRONG.schreien = ['schreit', 'schrie', 'geschrien']; STRONG.waschen = ['wäscht', 'wusch', 'gewaschen']; STRONG.lassen = ['lässt', 'ließ', 'gelassen'];
 STRONG.stehlen = ['stiehlt', 'stahl', 'gestohlen']; STRONG.empfehlen = ['empfiehlt', 'empfahl', 'empfohlen']; STRONG.sinken = ['sinkt', 'sank', 'gesunken']; STRONG.wachsen = ['wächst', 'wuchs', 'gewachsen'];
 INSEP.push('unter', 'wieder'); SEIN_BASE.add('reiten');
@@ -266,6 +280,7 @@ G.conjugate = (infRaw) => {
   };
 };
 G.PERSONS = ['ich', 'du', 'er/sie/es', 'wir', 'ihr', 'sie/Sie'];
+G.REFL = ['mich', 'dich', 'sich', 'uns', 'euch', 'sich'];
 G.AUX = { haben: ['habe', 'hast', 'hat', 'haben', 'habt', 'haben'], sein: ['bin', 'bist', 'ist', 'sind', 'seid', 'sind'] };
 G.isVerb = (v) => v.t === 'v' && /^[a-zäöüß]+$/.test(v.w.trim().split(' ').pop());
 

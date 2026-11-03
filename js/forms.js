@@ -29,11 +29,13 @@ function nounPanel(v, groupName) {
 
 function verbPanel(v) {
   const c = G.conjugate(v.w);
-  const obj = c.obj ? c.obj + ' ' : '';
+  const obj = c.obj && c.obj !== 'sich' ? c.obj + ' ' : c.obj === 'sich' ? 'mich ' : '';
   const perf = G.AUX[c.aux === 'sein' ? 'sein' : 'haben'];
-  const rows = PRON.map((p, i) => `<tr><td>${p}</td><td>${say(p.split('/')[0] + ' ' + c.pres[i])}<b>${U.esc(c.pres[i])}</b></td><td>${U.esc(c.prat[i])}</td><td>${U.esc(perf[i])} … <b>${U.esc(c.part)}</b></td></tr>`).join('');
+  const refl = c.obj === 'sich';
+  const withR = (f, i) => (refl ? f.replace(/^(\S+)/, '$1 ' + G.REFL[i]) : f);
+  const rows = PRON.map((p, i) => `<tr><td>${p}</td><td>${say(p.split('/')[0] + ' ' + withR(c.pres[i], i))}<b>${U.esc(withR(c.pres[i], i))}</b></td><td>${U.esc(withR(c.prat[i], i))}</td><td>${U.esc(perf[i])}${refl ? ' ' + G.REFL[i] : ''} … <b>${U.esc(c.part)}</b></td></tr>`).join('');
   const ex1 = `${c.sep ? `Ich ${c.pres[0].split(' ')[0]} heute ${obj}${c.sep}.` : `Ich ${c.pres[0]} ${obj}heute.`}`.replace(/\s+/g, ' ');
-  const ex2 = `Gestern ${perf[2]} Anna ${obj}${c.part}.`.replace(/\s+/g, ' ');
+  const ex2 = `Gestern ${perf[2]} Anna ${c.obj === 'sich' ? 'sich ' : obj}${c.part}.`.replace(/\s+/g, ' ');
   return `<div class="forms">${c.aux === 'sein' ? '<span class="pill">Perfekt mit sein</span> ' : ''}${c.sep ? `<span class="pill">trennbar: ${U.esc(c.sep)}-</span> ` : ''}${c.strong ? '<span class="pill">unregelmäßig</span> ' : ''}${c.modal ? '<span class="pill">Modalverb</span>' : ''}
     <div class="gram"><table class="gtable"><tr><th></th><th>Präsens</th><th>Präteritum</th><th>Perfekt</th></tr>${rows}</table></div>
     ${c.imp ? `<p><b>Imperativ:</b> ${c.imp.map((x) => say(x + '!') + U.esc(x) + '!').join(' · ')}</p>` : ''}
@@ -66,7 +68,7 @@ App.Forms = {
 
   /* ─── generated drills ─── */
   nouns(l) { const out = []; for (const g of l.vocab) for (const v of g.items) if (G.declinable(v)) out.push({ v, group: g.group }); return out; },
-  verbs(l) { const out = []; for (const g of l.vocab) for (const v of g.items) if (G.isVerb(v) && !/[A-Z]/.test(v.w)) out.push(v); return out; },
+  verbs(l) { const out = []; for (const g of l.vocab) for (const v of g.items) if (G.isVerb(v) && !/[A-Z]/.test(v.w) && !/^sich /.test(v.w)) out.push(v); return out; },
   kasusDrill(l, n = 10) {
     const items = [];
     for (const { v, group } of U.shuffle(this.nouns(l))) {
@@ -92,7 +94,7 @@ App.Forms = {
       const v = verbs[Math.floor(Math.random() * verbs.length)];
       const c = G.conjugate(v.w); const i = Math.floor(Math.random() * 6);
       const obj = c.obj ? ' ' + c.obj : '';
-      const usePerf = perfekt && Math.random() < 0.5;
+      const usePerf = perfekt && Math.random() < 0.5 && (c.aux === 'haben' || l.n >= 12);
       let s;
       if (usePerf) s = `Gestern {${G.AUX[c.aux === 'sein' ? 'sein' : 'haben'][i]}} ${NAMES_INV[i]}${obj} {${c.part}}. (${c.inf} → Perfekt)`;
       else if (c.sep) { const [f, pre] = c.pres[i].split(' '); s = `Heute {${f}} ${NAMES_INV[i]}${obj} {${pre}}. (${c.inf} → Präsens)`; }

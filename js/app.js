@@ -184,8 +184,58 @@ function tabPhrases(l, T) {
 function tabExercises(l, T) {
   T.innerHTML = '';
   (l.exercises || []).forEach((ex, i) => T.appendChild(App.Exercises.render(ex, { key: 'e' + i, lessonId: l.id })));
-  const gens = [['kasus', () => App.Forms.kasusDrill(l)], ['konj', () => App.Forms.konjDrill(l)]];
-  for (const [key, regen] of gens) { const ex = regen(); if (ex && ex.items.length) T.appendChild(App.Exercises.render(ex, { key, lessonId: l.id, regen })); }
+  // Mix & Match: generated from this lesson (weighted) + all earlier lessons, only grammar taught so far
+  const upto = builtIds().slice(0, builtIds().indexOf(l.id) + 1).filter((id) => !L(id).test);
+  const n = Math.floor(l.n + 0.01);
+  T.appendChild(h(`<div><h2>Mix &amp; Match <span class="small muted">(this lesson's words + review of ${U.esc(upto[0])}–${U.esc(l.id)} · new items on every Reset)</span></h2>
+    <p class="small muted">Generated from ${upto.length} lesson(s): genders, plurals, cases, kein/nicht, possessives, conjugation${n >= 11 ? ', Perfekt' : ''} and the sentence builder. Endless practice on the <a href="#/mix">Mix page</a>.</p></div>`));
+  for (const kind of App.Mix.unlocked(n)) {
+    const regen = () => App.Mix.make(kind, upto, l.id);
+    const ex = regen(); if (ex) T.appendChild(App.Exercises.render(ex, { key: 'mix-' + kind, lessonId: l.id, regen, mix: kind }));
+  }
+}
+
+/* ───────────────── Mix page ───────────────── */
+function viewMix() {
+  setNav('mix');
+  const ids = builtIds().filter((id) => !L(id).test);
+  const saved = Store.data.mixSel || {};
+  const st = Store.data.mixStats || {};
+  const defUpto = saved.upto || ids.filter((id) => Store.data.lessons[id] && (Store.data.lessons[id].added || Store.data.lessons[id].visited)).pop() || 'L6';
+  $main().innerHTML = `<h1>Grammatik-Mix</h1><p class="sub">Endless, adaptive mix-and-match drills from the words and grammar of every lesson up to the one you choose. Weak drill types come up more often.</p>
+    <div class="card"><div class="row"><label>Up to <select data-upto>${ids.map((id) => `<option ${id === defUpto ? 'selected' : ''}>${id}</option>`).join('')}</select></label>
+      <label>Focus <select data-focus><option value="">all equally</option>${ids.map((id) => `<option ${id === saved.focus ? 'selected' : ''}>${id}</option>`).join('')}</select></label>
+      <label>Exercises per round <select data-count>${[4, 6, 8, 10].map((x) => `<option ${x === (saved.count || 6) ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+      <button class="btn primary" data-go>▶ New round</button></div>
+      <div class="row small" style="margin-top:8px" data-kinds></div></div><div id="mixout"></div>`;
+  const M = $main();
+  const kindsBox = M.querySelector('[data-kinds]');
+  const renderKinds = () => {
+    const n = Math.floor(L(M.querySelector('[data-upto]').value).n + 0.01);
+    kindsBox.innerHTML = Object.entries(App.Mix.GEN).map(([k, g]) => { const on = g.min <= n; const s = st[k]; return `<label class="pill" style="opacity:${on ? 1 : 0.4}" title="${on ? '' : 'unlocks at L' + g.min}"><input type="checkbox" value="${k}" ${on && (!saved.kinds || saved.kinds.includes(k)) ? 'checked' : ''} ${on ? '' : 'disabled'}> ${U.esc(g.title.split(':')[0])}${s ? ` · ${Math.round((s.ok / s.n) * 100)}%` : ''}</label>`; }).join(' ');
+  };
+  renderKinds();
+  M.querySelector('[data-upto]').onchange = renderKinds;
+  const go = () => {
+    const upto = M.querySelector('[data-upto]').value, focus = M.querySelector('[data-focus]').value || upto, count = +M.querySelector('[data-count]').value;
+    const kinds = [...kindsBox.querySelectorAll('input:checked')].map((x) => x.value);
+    Store.data.mixSel = { upto, focus: M.querySelector('[data-focus]').value, count, kinds }; Store.save();
+    const lessonIds = ids.slice(0, ids.indexOf(upto) + 1);
+    const out = M.querySelector('#mixout'); out.innerHTML = '';
+    const w = App.Mix.weights(kinds); const tot = w.reduce((a, x) => a + x.w, 0);
+    const chosen = [];
+    for (let i = 0; i < count * 3 && chosen.length < count; i++) {
+      let r = Math.random() * tot, k = w[0].k; for (const x of w) { r -= x.w; if (r <= 0) { k = x.k; break; } }
+      if (chosen.filter((c) => c === k).length < 2) chosen.push(k);
+    }
+    chosen.forEach((kind, i) => {
+      const regen = () => App.Mix.make(kind, lessonIds, focus);
+      const ex = regen(); if (ex) out.appendChild(App.Exercises.render(ex, { key: 'mix-' + kind, lessonId: focus, regen, mix: kind }));
+    });
+    out.appendChild(h('<div class="row" style="justify-content:center"><button class="btn primary" data-again>▶ Next round</button></div>'));
+    out.querySelector('[data-again]').onclick = () => { go(); window.scrollTo(0, 0); };
+  };
+  M.querySelector('[data-go]').onclick = go;
 }
 function tabExam(l, T) {
   T.innerHTML = `<p class="sub">Goethe-format tasks using only this lesson's material. The full exam structure is on the <a href="#/exam">Prüfung page</a>.</p>`;
@@ -425,6 +475,7 @@ function route() {
     case 'review': return viewReview(b);
     case 'drill': return viewDrill(b);
     case 'exam': return viewExam();
+    case 'mix': return viewMix();
     case 'plan': return viewPlan();
     case 'settings': return viewSettings();
     default: return viewHome();
