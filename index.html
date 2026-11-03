@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deutsch A1→A2</title>
+<meta name="description" content="Interactive German textbook (Menschen A1.1 → A2.2) with spaced repetition, Pimsleur-style audio drills and Goethe exam training.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='3' height='2' fill='%23ffce00'/><rect width='3' height='1.333' fill='%23d00'/><rect width='3' height='.667' fill='%23000'/></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top"><div class="top-inner">
+  <a class="brand" href="#/"><span class="flag"></span> Deutsch A1→A2</a>
+  <nav class="nav">
+    <a href="#/" data-nav="home">Heute</a>
+    <a href="#/review" data-nav="review">Reviews<span class="badge" id="due-badge" hidden>0</span></a>
+    <a href="#/drill" data-nav="drill">Drill</a>
+    <a href="#/plan" data-nav="plan">Syllabus</a>
+    <a href="#/exam" data-nav="exam">Prüfung</a>
+    <a href="#/settings" data-nav="settings">⚙</a>
+  </nav>
+</div></header>
+<main id="main"></main>
+
+<!-- content -->
+<script src="data/helpers.js"></script>
+<script src="data/syllabus.js"></script>
+<script src="data/lessons/l01.js"></script>
+<script src="data/lessons/l02.js"></script>
+<script src="data/lessons/l03.js"></script>
+<script src="data/lessons/m01.js"></script>
+<script src="data/lessons/l04.js"></script>
+<script src="data/lessons/l05.js"></script>
+<script src="data/lessons/l06.js"></script>
+<!-- engine -->
+<script src="js/core.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/exercises.js"></script>
+<script src="js/drill.js"></script>
+<script src="js/app.js"></script>
+<script>App.start();</script>
+</body>
+</html>
