@@ -26,7 +26,7 @@ function shell(ex, ctx, bodyHtml) {
     <div class="ex-body">${bodyHtml}</div>
     <div class="row" style="margin-top:10px"><button class="btn primary sm" data-check>Check</button><button class="btn ghost sm" data-reset>Reset</button><span class="spacer"></span><span class="result score"></span></div>
   </div>`);
-  el.querySelector('[data-reset]').onclick = () => el.replaceWith(App.Exercises.render(ex, ctx));
+  el.querySelector('[data-reset]').onclick = () => el.replaceWith(App.Exercises.render(ctx.regen ? ctx.regen() : ex, ctx));
   return el;
 }
 function finish(el, ctx, score, total) {

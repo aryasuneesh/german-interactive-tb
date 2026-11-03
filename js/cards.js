@@ -19,7 +19,7 @@ App.Cards = {
     for (const grp of l.vocab || []) for (const v of grp.items) {
       const de = v.t === 'n' ? DE.nounDe(v) : v.w;
       let hint = v.t === 'n' ? (v.g === 'pl' ? 'noun · plural' : 'noun · with article') : v.t === 'v' ? 'verb (infinitive)' : v.t === 'p' ? 'phrase' : '';
-      out.push({ id: `${l.id}:p:${U.hash(de)}`, lesson: l.id, kind: 'p', front: v.en, hint, answer: alts(de), de: clean(de), g: v.g, plural: v.t === 'n' ? DE.pluralDe(v) : '', ex: v.ex || '', group: grp.group });
+      out.push({ id: `${l.id}:p:${U.hash(de)}`, lesson: l.id, kind: 'p', front: v.en, hint, answer: alts(de), de: clean(de), g: v.g, plural: v.t === 'n' ? DE.pluralDe(v) : '', ex: v.ex || '', group: grp.group, extra: !!grp.extra });
     }
     (l.exercises || []).concat(l.exam || []).forEach((ex) => {
       if (ex.type !== 'gap') return;
@@ -57,7 +57,7 @@ App.Cards = {
   queue({ lessons = null, extraNew = 0, cram = false } = {}) {
     const now = Date.now(), eod = U.endOfToday();
     const all = this.all();
-    const pool = Object.values(all).filter((c) => (lessons ? lessons.includes(c.lesson) : this.isAdded(c.lesson)));
+    const pool = Object.values(all).filter((c) => (lessons ? lessons.includes(c.lesson) : this.isAdded(c.lesson)) && (!c.extra || Store.data.settings.extraVocab !== false));
     const learning = [], review = [], fresh = [];
     for (const c of pool) {
       const s = Store.data.cards[c.id];
@@ -69,7 +69,7 @@ App.Cards = {
     review.sort((a, b) => Store.data.cards[a.id].due - Store.data.cards[b.id].due);
     learning.sort((a, b) => Store.data.cards[a.id].due - Store.data.cards[b.id].due);
     const order = DE.order;
-    fresh.sort((a, b) => order.indexOf(a.lesson) - order.indexOf(b.lesson)); // lesson order; within lesson: vocab → grammar → sentences
+    fresh.sort((a, b) => (a.extra - b.extra) || (order.indexOf(a.lesson) - order.indexOf(b.lesson))); // lesson order; within lesson: vocab → grammar → sentences
     const left = Math.max(0, Store.data.settings.newPerDay - Store.day().newCards) + extraNew;
     return { learning, review, fresh: cram ? [] : fresh.slice(0, left), freshTotal: fresh.length, now };
   },

@@ -124,15 +124,32 @@ function tabOverview(l, T) {
   const b = T.querySelector('[data-add]'); if (b) b.onclick = () => { Cards.addLesson(l.id); tabOverview(l, T); setNav('lessons'); };
 }
 function tabVocab(l, T) {
-  T.innerHTML = `<div class="row"><button class="btn" data-playall>▶ Play all (listen & repeat)</button><span class="small muted"><span class="g-m">der</span> · <span class="g-n">das</span> · <span class="g-f">die</span> · <span class="g-pl">plural</span>. Click ▶ on any line.</span><span class="spacer"></span>
+  const coreN = l.vocab.filter((g) => !g.extra).reduce((a, g) => a + g.items.length, 0), extraN = l.vocab.filter((g) => g.extra).reduce((a, g) => a + g.items.length, 0);
+  T.innerHTML = `<div class="row"><button class="btn" data-playall>▶ Play all (listen & repeat)</button><button class="btn ghost" data-allforms>▾ Show all forms</button><span class="small muted"><span class="g-m">der</span> · <span class="g-n">das</span> · <span class="g-f">die</span> · <span class="g-pl">plural</span>. Click <b>Formen</b> for all cases / conjugations.</span><span class="spacer"></span>
     ${Cards.isAdded(l.id) ? '<span class="pill on">in review deck</span>' : '<button class="btn primary sm" data-add>Add to reviews</button>'}</div>
-    ${l.vocab.map((g) => `<h2>${U.esc(g.group)}</h2><div class="card" style="padding:4px 8px"><table class="vocab">${g.items.map((v) => {
+    <p class="small muted">${coreN} words from the book${extraN ? ` + ${extraN} in the Themenwortschatz` : ''}.</p>
+    ${l.vocab.map((g, gi) => `<details class="vgroup" open><summary><h2 style="display:inline">${U.esc(g.group)}</h2>${g.extra ? ' <span class="pill">extra</span>' : ''} <span class="small muted">(${g.items.length})</span></summary><div class="card" style="padding:4px 8px"><table class="vocab">${g.items.map((v, vi) => {
       const de = v.t === 'n' ? DE.nounDe(v) : v.w;
       const cls = v.t === 'n' ? 'g-' + v.g : '';
+      const fk = App.Forms.hasForms(v);
       return `<tr><td><button class="icon-btn" data-say="${U.esc(de)}">▶</button></td><td><span class="de ${cls}">${U.esc(de)}</span>${v.t === 'n' && v.pl !== undefined ? `<div class="pl">${U.esc(DE.pluralDe(v))}</div>` : ''}</td>
-        <td>${U.esc(v.en)}${v.ex ? `<div class="ex"><button class="icon-btn" data-say="${U.esc(v.ex)}">▶</button>${U.esc(v.ex)}</div>` : ''}</td></tr>`;
-    }).join('')}</table></div>`).join('')}`;
-  T.addEventListener('click', (e) => { const b = e.target.closest('[data-say]'); if (b) Speech.speak(b.dataset.say); });
+        <td>${U.esc(v.en)}${v.ex ? `<div class="ex"><button class="icon-btn" data-say="${U.esc(v.ex)}">▶</button>${U.esc(v.ex)}</div>` : ''}</td>
+        <td style="width:80px;text-align:right">${fk ? `<button class="btn sm ghost" data-forms="${gi}:${vi}">Formen ▾</button>` : ''}</td></tr><tr class="forms-row" data-fr="${gi}:${vi}" hidden><td></td><td colspan="3"></td></tr>`;
+    }).join('')}</table></div></details>`).join('')}`;
+  const toggle = (key, force) => {
+    const row = T.querySelector(`[data-fr="${key}"]`); if (!row) return;
+    const [gi, vi] = key.split(':').map(Number); const g = l.vocab[gi];
+    const open = force != null ? force : row.hidden;
+    if (open && !row.dataset.filled) { row.lastElementChild.innerHTML = App.Forms.panel(g.items[vi], g.group); row.dataset.filled = 1; }
+    row.hidden = !open;
+    const b = T.querySelector(`[data-forms="${key}"]`); if (b) b.textContent = open ? 'Formen ▴' : 'Formen ▾';
+  };
+  T.addEventListener('click', (e) => {
+    const s = e.target.closest('[data-say]'); if (s) return Speech.speak(s.dataset.say);
+    const f = e.target.closest('[data-forms]'); if (f) toggle(f.dataset.forms);
+  });
+  let allOpen = false;
+  T.querySelector('[data-allforms]').onclick = (e) => { allOpen = !allOpen; T.querySelectorAll('[data-forms]').forEach((b) => toggle(b.dataset.forms, allOpen)); e.target.textContent = allOpen ? '▴ Hide all forms' : '▾ Show all forms'; };
   let playing = false;
   T.querySelector('[data-playall]').onclick = async (e) => {
     if (playing) { playing = false; Speech.cancel(); e.target.textContent = '▶ Play all (listen & repeat)'; return; }
@@ -167,6 +184,8 @@ function tabPhrases(l, T) {
 function tabExercises(l, T) {
   T.innerHTML = '';
   (l.exercises || []).forEach((ex, i) => T.appendChild(App.Exercises.render(ex, { key: 'e' + i, lessonId: l.id })));
+  const gens = [['kasus', () => App.Forms.kasusDrill(l)], ['konj', () => App.Forms.konjDrill(l)]];
+  for (const [key, regen] of gens) { const ex = regen(); if (ex && ex.items.length) T.appendChild(App.Exercises.render(ex, { key, lessonId: l.id, regen })); }
 }
 function tabExam(l, T) {
   T.innerHTML = `<p class="sub">Goethe-format tasks using only this lesson's material. The full exam structure is on the <a href="#/exam">Prüfung page</a>.</p>`;
@@ -375,7 +394,8 @@ function viewSettings() {
       <label>Your name <input type="text" data-k="name" value="${U.esc(s.name)}"></label>
       <p><label>New cards per day <input type="number" min="5" max="200" data-k="newPerDay" value="${s.newPerDay}" style="width:90px"></label></p>
       <p class="small muted">Revising L1–6 before the 30 Nov test: 40–60/day gets you through the deck in ~2 weeks. Each new card costs ~3–4 reviews over the following week.</p>
-      <label><input type="checkbox" data-k="autoplay" ${s.autoplay ? 'checked' : ''}> Auto-play German on answer</label>
+      <label><input type="checkbox" data-k="autoplay" ${s.autoplay ? 'checked' : ''}> Auto-play German on answer</label><br>
+      <label><input type="checkbox" data-k="extraVocab" ${s.extraVocab !== false ? 'checked' : ''}> Include Themenwortschatz (extra words) in reviews. They come after the book's words.</label>
       <p><label>Theme <select data-k="theme">${['auto', 'light', 'dark'].map((t) => `<option ${t === s.theme ? 'selected' : ''}>${t}</option>`).join('')}</select></label></p></div>
     <div class="card"><h3>Backup</h3><p class="small muted">Progress lives in this browser only. Export it weekly, and to move between laptop and phone.</p>
       <div class="row"><button class="btn" data-export>Export progress</button><label class="btn">Import<input type="file" accept=".json" data-import hidden></label><button class="btn ghost" data-reset style="color:var(--bad)">Reset everything</button></div></div>

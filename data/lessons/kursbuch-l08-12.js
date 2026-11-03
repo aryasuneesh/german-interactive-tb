@@ -101,7 +101,7 @@ add('L11', {
 });
 
 add('L12', {
-  vocab: [N('n', 'Event', 'Events', 'event'), N('m', 'Fan', 'Fans', 'fan'), N('f', 'Band', 'Bands', 'band'), N('m', 'Rockmusik', '', 'rock music'), W('vor drei Monaten', 'three months ago'), W('rund um die Uhr', 'round the clock'), W('Das klingt interessant.', 'That sounds interesting.')],
+  vocab: [N('n', 'Event', 'Events', 'event'), N('m', 'Fan', 'Fans', 'fan'), N('f', 'Band', 'Bands', 'band'), N('f', 'Rockmusik', '', 'rock music'), W('vor drei Monaten', 'three months ago'), W('rund um die Uhr', 'round the clock'), W('Das klingt interessant.', 'That sounds interesting.')],
   exercises: [
     { type: 'tf', title: 'Feste und Events', text: 'Karneval: Er beginnt am 11. November um 11:11 Uhr. Im Februar oder März feiern die Menschen sechs Tage lang auf der Straße.\nSilvester in Berlin: In der Nacht vom 31. Dezember zum 1. Januar feiern Menschen am Brandenburger Tor die größte Open-Air-Party (mit einer Million Besuchern!).\nRock am Ring: Seit 1985 gehen viele Rockmusik-Fans im Mai oder Juni zu Rock am Ring am Nürburgring in der Eifel. Das Festival dauert zwei bis drei Tage. Es kommen 70.000 bis 90.000 Besucher. Rund um die Uhr können sie ihre Lieblingsbands hören.\nOktoberfest: Es gibt das Oktoberfest seit 1810. Es ist jedes Jahr im September und Oktober in München und dauert ungefähr zwei Wochen. Es kommen fünf bis sechs Millionen Besucher.', items: [
       ['Der Karneval beginnt am 11.11. um 11:11 Uhr.', true], ['Silvester feiert man am Brandenburger Tor in Berlin.', true], ['Rock am Ring gibt es seit 1810.', false], ['Rock am Ring dauert zwei Wochen.', false], ['Das Oktoberfest ist im September und Oktober.', true], ['Zum Oktoberfest kommen 70.000 Besucher.', false],

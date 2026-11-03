@@ -43,8 +43,11 @@ js/core.js            utils, storage, FSRS-4.5 scheduler, speech (TTS + recognit
 js/cards.js           lesson → flashcards, daily queue
 js/exercises.js       13 exercise types (incl. pronunciation)
 js/drill.js           Pimsleur engine
+js/grammar.js         rule-based declension (4 cases, der/ein/kein, weak nouns), conjugation (Präsens/Präteritum/Perfekt/Imperativ), comparison
+js/forms.js           "Formen" panels + generated Kasus/Konjugation drills
 js/app.js             views + router
 data/syllabus.js      48-lesson syllabus, weekly plan, exam formats
+data/themes.js        Themenwortschatz: extra words per Modul theme
 data/lessons/*.js     lesson content (one file per Lektion; arbeitsbuch.js adds the AB tasks)
 docs/SYLLABUS.md      research & method
 ```
