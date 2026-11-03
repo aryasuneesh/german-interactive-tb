@@ -50,6 +50,7 @@ js/app.js             views + router
 data/syllabus.js      48-lesson syllabus, weekly plan, exam formats
 data/themes.js        Themenwortschatz: extra words per Modul theme (wave 1)
 data/themes2.js       Themenwortschatz wave 2
+data/themes3.js       Themenwortschatz wave 3 (jobs, housing, tools, sport, food, travel, banking, weather, everyday verbs)
 data/lessons/*.js     lesson content (one file per Lektion; arbeitsbuch.js adds the AB tasks)
 docs/SYLLABUS.md      research & method
 ```

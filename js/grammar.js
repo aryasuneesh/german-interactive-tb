@@ -210,14 +210,16 @@ const SPECIAL = {
   mögen: { pres: ['mag', 'magst', 'mag', 'mögen', 'mögt', 'mögen'], prat: ['mochte', 'mochtest', 'mochte', 'mochten', 'mochtet', 'mochten'], part: 'gemocht', aux: 'haben', modal: true },
   möchten: { pres: ['möchte', 'möchtest', 'möchte', 'möchten', 'möchtet', 'möchten'], prat: ['wollte', 'wolltest', 'wollte', 'wollten', 'wolltet', 'wollten'], part: '(gewollt)', aux: 'haben', modal: true, note: 'möchten has no own past: use wollte / hat gewollt' },
 };
-const SEP = ['zurück', 'weiter', 'zusammen', 'spazieren', 'kennen', 'fest', 'statt', 'teil', 'fern', 'heim', 'weg', 'vor', 'nach', 'mit', 'los', 'auf', 'aus', 'ein', 'an', 'ab', 'zu', 'um', 'her', 'hin', 'dazu', 'vorbei', 'sauber'];
+const SEP = ['herunter', 'heraus', 'herein', 'hinaus', 'zurück', 'weiter', 'zusammen', 'spazieren', 'kennen', 'fest', 'statt', 'teil', 'fern', 'heim', 'weg', 'vor', 'nach', 'mit', 'los', 'auf', 'aus', 'ein', 'an', 'ab', 'zu', 'um', 'her', 'hin', 'dazu', 'vorbei', 'sauber'];
 const INSEP = ['be', 'ver', 'er', 'ent', 'zer', 'ge', 'emp', 'miss', 'über', 'hinter', 'wider'];
 const SEIN_BASE = new Set(['sein', 'werden', 'bleiben', 'kommen', 'gehen', 'fahren', 'fliegen', 'laufen', 'schwimmen', 'springen', 'steigen', 'fallen', 'reisen', 'wandern', 'passieren', 'sterben', 'klettern', 'landen', 'rennen', 'joggen', 'segeln', 'umziehen', 'aufstehen', 'einschlafen', 'aufwachen', 'wachsen', 'folgen', 'begegnen', 'starten']);
 const HABEN_OVERRIDE = new Set(['bekommen', 'verstehen', 'bestehen', 'entstehen?', 'vergehen?']);
 const SEP_SEIN_STEMS = new Set(['stehen']); // aufstehen = sein, verstehen = haben
 
 const NOT_SEP = new Set(['antworten', 'analysieren', 'umarmen', 'abonnieren', 'beantworten', 'anstrengen?']);
-STRONG.raten = ['rät', 'riet', 'geraten']; STRONG.werben = ['wirbt', 'warb', 'geworben']; STRONG.schlagen = ['schlägt', 'schlug', 'geschlagen']; STRONG.braten = ['brät', 'briet', 'gebraten'];
+STRONG.raten = ['rät', 'riet', 'geraten']; STRONG.gleichen = ['gleicht', 'glich', 'geglichen']; STRONG.schießen = ['schießt', 'schoss', 'geschossen']; STRONG.streichen = ['streicht', 'strich', 'gestrichen'];
+STRONG.heben = ['hebt', 'hob', 'gehoben']; STRONG.weisen = ['weist', 'wies', 'gewiesen']; STRONG.stoßen = ['stößt', 'stieß', 'gestoßen']; STRONG.streiten = ['streitet', 'stritt', 'gestritten'];
+['aufwachsen', 'einziehen', 'aufstehen', 'umziehen', 'einschlafen', 'aufwachen', 'zurückkommen'].forEach((x) => SEIN_BASE.add(x)); STRONG.werben = ['wirbt', 'warb', 'geworben']; STRONG.schlagen = ['schlägt', 'schlug', 'geschlagen']; STRONG.braten = ['brät', 'briet', 'gebraten'];
 STRONG.reiten = ['reitet', 'ritt', 'geritten']; STRONG.schreien = ['schreit', 'schrie', 'geschrien']; STRONG.waschen = ['wäscht', 'wusch', 'gewaschen']; STRONG.lassen = ['lässt', 'ließ', 'gelassen'];
 STRONG.stehlen = ['stiehlt', 'stahl', 'gestohlen']; STRONG.empfehlen = ['empfiehlt', 'empfahl', 'empfohlen']; STRONG.sinken = ['sinkt', 'sank', 'gesunken']; STRONG.wachsen = ['wächst', 'wuchs', 'gewachsen'];
 INSEP.push('unter', 'wieder'); SEIN_BASE.add('reiten');
@@ -236,6 +238,7 @@ G.conjugate = (infRaw) => {
   const inf = words.pop(); const obj = words.join(' ');
   if (SPECIAL[inf]) { const s = SPECIAL[inf]; return { inf, obj, pres: s.pres, prat: s.prat, part: s.part, aux: s.aux, imp: s.imp || null, modal: !!s.modal, note: s.note || '', sep: '' }; }
   const { pre, base } = G.splitVerb(inf);
+  if (pre && SPECIAL[base]) { const q = SPECIAL[base]; const add = (f) => f + ' ' + pre; return { inf, obj, sep: pre, pres: q.pres.map(add), prat: q.prat.map(add), part: pre + q.part, aux: q.aux, imp: q.imp ? q.imp.map((x) => x.split(' ')[0] + (x.includes(' Sie') ? ' Sie ' : ' ') + pre) : null, modal: false, strong: true }; }
   const ip = !pre ? insepOf(base) : null;
   const root = ip ? base.slice(ip.length) : base;
   const strongKey = STRONG[base] ? base : (ip && STRONG[root] && !REGULAR_INSEP.has(base) ? root : null);
@@ -270,7 +273,7 @@ G.conjugate = (infRaw) => {
   else if (!ip && SEIN_BASE.has(base) && base !== 'stehen') aux = 'sein';
   if (ip && SEIN_BASE.has(base)) aux = 'sein';
   let impDu;
-  if (strongKey) { const s3stem = s3.replace(/t$/, ''); impDu = /ä|äu/.test(s3) ? st : s3stem; }
+  if (strongKey) { const s3stem = s3.replace(/t$/, ''); impDu = /ä|ö/.test(s3) ? st : s3stem; }
   else impDu = st + E;
   const sepAdd = (f) => (pre ? f + ' ' + pre : f);
   return {

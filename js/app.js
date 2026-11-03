@@ -59,6 +59,7 @@ function viewHome() {
     ${!anyAdded ? `<div class="notice"><b>Start here.</b> You've already done L1–6 in class. Add them to your spaced-repetition deck now, then do each lesson's exercises to find your gaps. Add L7–12 one by one as you study them (button on each lesson's Überblick tab).
       <div class="row" style="margin-top:8px"><button class="btn primary" data-addall>Add L1–6 + Modul Plus to my reviews</button><a class="btn" href="#/lesson/L1">Start with L1 instead</a></div></div>` : ''}
     ${!Speech.hasGerman() ? `<div class="notice">⚠ No German text-to-speech voice detected (yet). Audio is essential here. See <a href="#/settings">Settings</a> for how to install one (Windows: Settings → Time & Language → Speech → Add voices → Deutsch). Best results in Microsoft Edge.</div>` : ''}
+    ${extraToggle()}
     <div class="grid">
       <div class="card"><h3>1 · Reviews</h3><div class="big">${due}</div><div class="muted small">due now · +${q.fresh.length} new today (${q.freshTotal} unseen in deck)</div>
         <div class="row" style="margin-top:10px"><a class="btn primary" href="#/review">${due + q.fresh.length ? 'Start reviews' : 'Nothing due'}</a></div></div>
@@ -81,6 +82,17 @@ function viewHome() {
   const b = $main().querySelector('[data-addall]');
   if (b) b.onclick = () => { builtIds().filter((id) => L(id).n <= 6.5).forEach((id) => Cards.addLesson(id)); Store.data.settings.newPerDay = Math.max(Store.data.settings.newPerDay, 40); Store.save(); viewHome(); };
 }
+function extraCount() { return Object.values(Cards.all()).filter((c) => c.extra).length; }
+function extraToggle() {
+  const on = Store.data.settings.extraVocab !== false;
+  return `<div class="card row" style="margin-bottom:14px;padding:10px 16px"><label style="display:flex;gap:10px;align-items:center;cursor:pointer;flex:1">
+    <input type="checkbox" data-extra-toggle ${on ? 'checked' : ''} style="width:20px;height:20px">
+    <span><b>Themenwortschatz in reviews: ${on ? 'ON' : 'OFF'}</b> <span class="small muted">· ${extraCount()} extra words. ${on ? 'They come after the book\'s words.' : 'Only the book\'s words are reviewed. The extra words still appear in Wortschatz and the Mix drills.'}</span></span></label></div>`;
+}
+document.addEventListener('change', (e) => {
+  if (!e.target.matches('[data-extra-toggle]')) return;
+  Store.data.settings.extraVocab = e.target.checked; Store.save(); route();
+});
 function tile(id) {
   const l = L(id), p = lessonProgress(id);
   const pct = p.exTotal ? Math.round((p.exDone / p.exTotal) * 100) : 0;
@@ -295,6 +307,7 @@ function viewReview(param) {
   const list = [...q.learning];
   const rv = q.review.slice(), fr = q.fresh.slice();
   while (rv.length || fr.length) { for (let i = 0; i < 4 && rv.length; i++) list.push(rv.shift()); if (fr.length) list.push(fr.shift()); }
+  App._extraBar = extraToggle();
   const again = []; // cards relearning this session
   let i = 0, startT = Date.now(), n = 0;
   const S = Store.data.settings;
@@ -318,7 +331,7 @@ function viewReview(param) {
     const remaining = list.length - i + again.length;
     const isNew = !st;
     const canMic = Speech.canListen() && (card.kind === 's' || card.kind === 'p');
-    $main().innerHTML = `<div class="flash">
+    $main().innerHTML = `${App._extraBar || ''}<div class="flash">
       <div class="row small muted"><span>${remaining} left</span><span class="spacer"></span><span>${isNew ? '<span class="pill on">new</span>' : ''} ${U.esc(card.lesson)} · ${card.kind === 'p' ? 'Wort' : card.kind === 'g' ? 'Grammatik' : 'Satz'}</span></div>
       <div class="card" style="margin-top:8px">
         <div class="hint small">${U.esc(card.hint || '')}</div>
@@ -380,7 +393,7 @@ function viewReview(param) {
     };
   };
   if (!list.length) {
-    $main().innerHTML = `<div class="flash card"><h1>Nothing due 👌</h1><p>Come back later, or:</p><div class="row" style="justify-content:center"><a class="btn primary" href="#/review/weak">Practise my weakest 25</a><a class="btn" href="#/drill">Audio drill</a></div></div>`;
+    $main().innerHTML = `${extraToggle()}<div class="flash card"><h1>Nothing due 👌</h1><p>Come back later, or:</p><div class="row" style="justify-content:center"><a class="btn primary" href="#/review/weak">Practise my weakest 25</a><a class="btn" href="#/drill">Audio drill</a></div></div>`;
     return;
   }
   next();
