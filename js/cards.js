@@ -24,10 +24,12 @@ App.Cards = {
     (l.exercises || []).concat(l.exam || []).forEach((ex) => {
       if (ex.type !== 'gap') return;
       ex.items.forEach((it) => {
-        const m = it.match(/\{([^}]+)\}/); if (!m) return;
-        const front = it.replace(/\{[^}]+\}/, '_____');
-        const full = it.replace(/\{([^}|]+)[^}]*\}/, '$1').replace(/\s*\([^)]*\)\s*$/, '');
-        out.push({ id: `${l.id}:g:${U.hash(it)}`, lesson: l.id, kind: 'g', front, hint: ex.title, answer: m[1].split('|'), de: full });
+        const ms = [...it.matchAll(/\{([^}]+)\}/g)]; if (!ms.length) return;
+        const front = it.replace(/\{[^}]+\}/g, '_____');
+        const full = it.replace(/\{([^}|]+)[^}]*\}/g, '$1').replace(/\s*\([^)]*\)\s*$/, '');
+        const answer = ms.length === 1 ? ms[0][1].split('|') : [ms.map((m) => m[1].split('|')[0]).join(' ')];
+        const hint = (ex.title || '').replace(/^AB · /, 'Arbeitsbuch · ') + (ms.length > 1 ? ' — type all ' + ms.length + ' gaps, separated by spaces' : '');
+        out.push({ id: `${l.id}:g:${U.hash(it)}`, lesson: l.id, kind: 'g', front, hint, answer, de: full });
       });
     });
     (l.drill || []).forEach((d) => out.push({ id: `${l.id}:s:${U.hash(d.de)}`, lesson: l.id, kind: 's', front: d.en, hint: 'say the whole sentence', answer: [d.de], de: d.de }));

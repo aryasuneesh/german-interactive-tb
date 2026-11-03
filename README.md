@@ -6,7 +6,7 @@ An interactive textbook that follows **Menschen A1.1** (Hueber) and leads on to 
 - **Pimsleur-style audio drills**
 - **Goethe exam training** (Start Deutsch 1 / Goethe-Zertifikat A2)
 
-Built so far: **Lektion 1–6 + Modul 1 Plus** (Kursbuch p.9–36). The full 48-lesson syllabus and the 15-week plan are in the app under *Syllabus* and in [`docs/SYLLABUS.md`](docs/SYLLABUS.md).
+Built so far: **Lektion 1–12 + Modul 1 & 2 Plus + Probetest L1–12** (all of Menschen A1.1, Kursbuch + Arbeitsbuch). The full 48-lesson syllabus and the 15-week plan are in the app under *Syllabus* and in [`docs/SYLLABUS.md`](docs/SYLLABUS.md).
 
 ## Run it (Windows)
 
@@ -41,11 +41,11 @@ index.html            app shell
 css/style.css
 js/core.js            utils, storage, FSRS-4.5 scheduler, speech (TTS + recognition)
 js/cards.js           lesson → flashcards, daily queue
-js/exercises.js       12 exercise types
+js/exercises.js       13 exercise types (incl. pronunciation)
 js/drill.js           Pimsleur engine
 js/app.js             views + router
 data/syllabus.js      48-lesson syllabus, weekly plan, exam formats
-data/lessons/*.js     lesson content (one file per Lektion)
+data/lessons/*.js     lesson content (one file per Lektion; arbeitsbuch.js adds the AB tasks)
 docs/SYLLABUS.md      research & method
 ```
 

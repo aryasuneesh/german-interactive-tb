@@ -152,12 +152,21 @@ const R = {
   },
 
   listen(ex, ctx) {
-    const how = ex.spell ? 'spelled letter by letter' : ex.numbers ? 'a number' : 'a sentence';
+    const how = ex.spell ? 'spelled letter by letter' : ex.times ? 'a time (write it like 14:30)' : ex.numbers ? 'a number (digits only)' : 'a sentence';
+    const sayOf = (it) => (typeof it === 'object' ? it.say : it);
+    const ansOf = (it) => (typeof it === 'object' ? it.a : it);
     const rows = ex.items.map((it, i) => `<div class="ex-item row" data-i="${i}"><button type="button" class="btn sm" data-play>▶ ${i + 1}</button><button type="button" class="icon-btn small" data-slow title="slower">🐢</button>
       <input type="text" class="inp" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false"><span class="fbx"></span></div>`).join('');
     const el = shell(ex, ctx, `<p class="small muted">You hear ${how}. Press ▶ as often as you need (in the exam: twice). ${Speech.hasGerman() ? '' : '<b>No German voice found — see Settings.</b>'}</p>` + rows);
     el.querySelector('.ex-head').appendChild(umlautBar());
-    const say = (it, slow) => ex.spell ? Speech.spell(it) : ex.numbers && (/\s/.test(it) || it.startsWith('0')) ? Speech.digits(it) : play(it, slow ? { rate: 0.6 } : {});
+    const say = (it, slow) => {
+      const t = sayOf(it);
+      if (ex.spell) return Speech.spell(t);
+      if (typeof it === 'object') return play(t, slow ? { rate: 0.65 } : {});
+      if (ex.times) { const [hh, mm] = t.split(':'); return play(`${+hh} Uhr ${+mm ? +mm : ''}`.trim(), slow ? { rate: 0.65 } : {}); }
+      if (ex.numbers && (/\s/.test(t) || t.startsWith('0'))) return Speech.digits(t);
+      return play(t, slow ? { rate: 0.6 } : {});
+    };
     el.querySelectorAll('.ex-item').forEach((row) => {
       const it = ex.items[row.dataset.i];
       row.querySelector('[data-play]').onclick = () => say(it);
@@ -168,13 +177,14 @@ const R = {
       let ok = 0;
       ex.items.forEach((it, i) => {
         const row = el.querySelector(`.ex-item[data-i="${i}"]`); const inp = row.querySelector('input');
-        let given = inp.value, want = it;
-        if (ex.numbers) { given = given.replace(/[\s.,€]/g, ''); want = it.replace(/[\s.]/g, ''); }
+        let given = inp.value, want = String(ansOf(it));
+        if (ex.times) { const f = (x) => x.replace(/[^\d]/g, ' ').trim().split(/\s+/).map((n) => String(+n)).join(':'); given = f(given); want = f(want); }
+        else if (ex.numbers) { given = given.replace(/[\s.,€]/g, ''); want = want.replace(/[\s.]/g, ''); }
         if (ex.spell) { given = given.trim(); }
-        const r = ex.spell ? { ok: given.toLowerCase() === it.toLowerCase(), umlaut: false } : U.check(given, [want]);
+        const r = ex.spell ? { ok: given.toLowerCase() === want.toLowerCase(), umlaut: false } : U.check(given, want.split('|'));
         inp.classList.toggle('ok', r.ok); inp.classList.toggle('bad', !r.ok);
         if (r.ok) ok++;
-        row.querySelector('.fbx').innerHTML = r.ok ? fb(true, r.umlaut ? '✓ (umlaut!)' : '✓') : fb(false, '→ ' + U.esc(it));
+        row.querySelector('.fbx').innerHTML = r.ok ? fb(true, r.umlaut ? '✓ (umlaut!)' : '✓') : fb(false, '→ ' + U.esc(String(ansOf(it)).split('|')[0]) + (typeof it === 'object' ? ` <span class="muted small">(${U.esc(it.say)})</span>` : ''));
       });
       finish(el, ctx, ok, ex.items.length);
     };
@@ -216,7 +226,9 @@ const R = {
     const rows = ex.items.map(([s], i) => `<div class="ex-item" data-i="${i}">${U.esc(s)}<br>
       <span class="opt"><button type="button" data-v="1">richtig</button></span><span class="opt"><button type="button" data-v="0">falsch</button></span></div>`).join('');
     const el = shell(ex, ctx, `<div class="textbox">${U.esc(ex.text)}</div><div class="row"><button type="button" class="btn ghost sm" data-play>▶ Listen to the text</button></div>${rows}`);
-    el.querySelector('[data-play]').onclick = () => play(ex.text.replace(/\n/g, '. '));
+    const pb = el.querySelector('[data-play]');
+    if (ex.audioOnce) { el.querySelector('.textbox').hidden = true; pb.textContent = '▶ Play announcement (only once — like the exam)'; }
+    pb.onclick = () => { if (ex.audioOnce) { pb.disabled = true; pb.textContent = 'Played. Answer now; the text appears after Check.'; } play(ex.text.replace(/\n/g, '. ')); };
     const sel = {};
     el.querySelectorAll('.ex-item').forEach((row) => row.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-v]'); if (!b) return;
@@ -229,7 +241,40 @@ const R = {
         row.querySelectorAll('button').forEach((b) => { b.classList.remove('ok', 'bad'); const v = b.dataset.v === '1'; if (v === ans) b.classList.add('ok'); else if (sel[i] === v) b.classList.add('bad'); });
         if (sel[i] === ans) ok++;
       });
+      el.querySelector('.textbox').hidden = false;
       finish(el, ctx, ok, ex.items.length);
+    };
+    return el;
+  },
+
+  pron(ex, ctx) {
+    const canSR = Speech.canListen();
+    const rows = ex.items.map((it, i) => `<div class="ex-item row" data-i="${i}"><button type="button" class="icon-btn" data-play>▶</button><button type="button" class="icon-btn" data-slow title="slower">🐢</button>
+      ${canSR ? '<button type="button" class="icon-btn" data-rec title="Say it">🎙</button>' : ''}<span style="font-weight:600">${U.esc(it)}</span><span class="spacer"></span><span class="small muted" data-heard></span></div>`).join('');
+    const quiz = (ex.quiz || []).map((q, i) => `<div class="ex-item" data-q="${i}"><div>${U.esc(q.q)}</div>${q.options.map((o, j) => `<span class="opt"><button type="button" data-j="${j}">${U.esc(o)}</button></span>`).join('')}</div>`).join('');
+    const el = shell(ex, ctx, `<div class="notice">${ex.rule}</div><p class="small muted">Listen, then repeat each line out loud${canSR ? ', and press 🎙 to check yourself' : ''}.</p>${rows}${quiz ? '<h3>Regel-Check</h3>' + quiz : ''}`);
+    el.querySelectorAll('[data-i]').forEach((row) => {
+      const it = ex.items[row.dataset.i];
+      row.querySelector('[data-play]').onclick = () => play(it.replace(/ – /g, ', '));
+      row.querySelector('[data-slow]').onclick = () => play(it.replace(/ – /g, ', '), { rate: 0.6 });
+      const rb = row.querySelector('[data-rec]');
+      if (rb) rb.onclick = async () => { rb.textContent = '●'; const r = await Speech.listen({ timeout: 5000 }); rb.textContent = '🎙';
+        const sim = r.text ? Math.max(...[r.text, ...(r.alts || [])].map((x) => Speech.similarity(x, it.replace(/ – /g, ' ')))) : 0;
+        row.querySelector('[data-heard]').innerHTML = r.text ? `„${U.esc(r.text)}" <b style="color:${sim > 0.8 ? 'var(--ok)' : sim > 0.6 ? 'var(--warn)' : 'var(--bad)'}">${Math.round(sim * 100)}%</b>` : 'nothing heard'; };
+    });
+    const sel = {};
+    el.querySelectorAll('[data-q]').forEach((row) => row.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-j]'); if (!b) return;
+      row.querySelectorAll('button').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); sel[row.dataset.q] = +b.dataset.j;
+    }));
+    el.querySelector('[data-check]').onclick = () => {
+      let ok = 0;
+      (ex.quiz || []).forEach((q, i) => {
+        const row = el.querySelector(`[data-q="${i}"]`);
+        row.querySelectorAll('button').forEach((b) => { b.classList.remove('ok', 'bad'); if (+b.dataset.j === q.a) b.classList.add('ok'); else if (+b.dataset.j === sel[i]) b.classList.add('bad'); });
+        if (sel[i] === q.a) ok++;
+      });
+      finish(el, ctx, ok, (ex.quiz || []).length);
     };
     return el;
   },

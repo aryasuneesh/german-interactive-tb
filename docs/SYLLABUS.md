@@ -1,13 +1,13 @@
 # Syllabus: A1.1 → A2.2 (Menschen-aligned, Goethe-targeted)
 
-**Goal:** finish A2.2 by **15 Feb 2027**. Current position on 3 Nov 2026: Menschen A1.1 Lektion 6 (Kursbuch p.36).
+**Goal:** finish A2.2 by **15 Feb 2027**. Current position on 3 Nov 2026: Menschen A1.1 Lektion 6 (Kursbuch p.36). The uni test on 30 Nov covers L1–12.
 **Milestones:** uni test 30 Nov 2026 · Start Deutsch 1 mock 27 Dec 2026 · Goethe A2 mocks 8–15 Feb 2027.
 
 ## 1. How the syllabus was built
 
 | Level | Source of truth | Confidence |
 |---|---|---|
-| A1.1 (L1–12) | Your *Menschen A1.1 Kursbuch* (Hueber 2012): the "Inhalt" pages (p.5–7) plus the full text of L1–L6 (p.9–36) | Exact |
+| A1.1 (L1–12) | Your *Menschen A1.1 Kursbuch* (Hueber 2012): Inhalt p.5–7 and text of p.9–47; the full *Arbeitsbuch* (p.1–103: Basistraining, Trainings, Aussprache, Tests, Lernwortschatz, Grammatikübersicht) | Exact |
 | A1.2–A2.2 (L13–48) | CEFR / Goethe A1 & A2 inventories (*Start Deutsch 1* and *Goethe-Zertifikat A2* Prüfungsziele, Wortlisten) in the order shared by **Menschen**, **Netzwerk neu** (Klett) and **Schritte international Neu** (Hueber) | High for content, approximate for lesson order |
 
 The three most-used DaF course books for adults teach essentially the same A1/A2 grammar core in nearly the same order. They differ mostly in themes and characters. Where they diverge, this plan follows Menschen, because that's what your university uses.

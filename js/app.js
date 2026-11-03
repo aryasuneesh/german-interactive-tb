@@ -4,6 +4,8 @@ const { U, Store, Speech, Cards, FSRS } = App;
 const $main = () => document.getElementById('main');
 const h = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
 const builtIds = () => DE.order.slice();
+const label = (l) => (l.test ? 'Probetest' : l.plus ? 'Modul ' + l.module + ' Plus' : 'Lektion ' + l.n);
+const pagesOf = (l) => (l.test ? 'L1–12' : 'p. ' + l.pages);
 const L = (id) => DE.lessons[id];
 const MILESTONES = [
   { date: '2026-11-30', label: 'Uni test (A1.1)' },
@@ -54,8 +56,8 @@ function viewHome() {
   $main().innerHTML = `
     <h1>${greet()}, ${U.esc(Store.data.settings.name || '')}!</h1>
     <p class="sub">${ms.map((m) => `<b>${m.days}</b> days to ${U.esc(m.label)}`).join(' · ')}</p>
-    ${!anyAdded ? `<div class="notice"><b>Start here.</b> You've already done L1–6 in class. Add them all to your spaced-repetition deck now, then do each lesson's exercises to find your gaps.
-      <div class="row" style="margin-top:8px"><button class="btn primary" data-addall>Add L1–6 to my reviews</button><a class="btn" href="#/lesson/L1">Start with L1 instead</a></div></div>` : ''}
+    ${!anyAdded ? `<div class="notice"><b>Start here.</b> You've already done L1–6 in class. Add them to your spaced-repetition deck now, then do each lesson's exercises to find your gaps. Add L7–12 one by one as you study them (button on each lesson's Überblick tab).
+      <div class="row" style="margin-top:8px"><button class="btn primary" data-addall>Add L1–6 + Modul Plus to my reviews</button><a class="btn" href="#/lesson/L1">Start with L1 instead</a></div></div>` : ''}
     ${!Speech.hasGerman() ? `<div class="notice">⚠ No German text-to-speech voice detected (yet). Audio is essential here. See <a href="#/settings">Settings</a> for how to install one (Windows: Settings → Time & Language → Speech → Add voices → Deutsch). Best results in Microsoft Edge.</div>` : ''}
     <div class="grid">
       <div class="card"><h3>1 · Reviews</h3><div class="big">${due}</div><div class="muted small">due now · +${q.fresh.length} new today (${q.freshTotal} unseen in deck)</div>
@@ -77,12 +79,12 @@ function viewHome() {
     <div class="row small muted"><span>${last14[0].d}</span><span class="spacer"></span><span>today</span></div></div>
     <p class="small muted">${Store.memoryOnly ? '⚠ Browser storage is blocked, so progress will NOT be saved. Use a normal (non-private) window.' : 'Progress is saved in this browser. Back it up regularly in Settings → Export.'}</p>`;
   const b = $main().querySelector('[data-addall]');
-  if (b) b.onclick = () => { builtIds().forEach((id) => Cards.addLesson(id)); Store.data.settings.newPerDay = Math.max(Store.data.settings.newPerDay, 40); Store.save(); viewHome(); };
+  if (b) b.onclick = () => { builtIds().filter((id) => L(id).n <= 6.5).forEach((id) => Cards.addLesson(id)); Store.data.settings.newPerDay = Math.max(Store.data.settings.newPerDay, 40); Store.save(); viewHome(); };
 }
 function tile(id) {
   const l = L(id), p = lessonProgress(id);
   const pct = p.exTotal ? Math.round((p.exDone / p.exTotal) * 100) : 0;
-  return `<a class="card lesson-tile" href="#/lesson/${id}"><div class="row"><span class="num">${l.plus ? 'Modul 1 Plus' : 'Lektion ' + l.n}</span><span class="spacer"></span><span class="pill">p. ${l.pages}</span></div>
+  return `<a class="card lesson-tile" href="#/lesson/${id}"><div class="row"><span class="num">${label(l)}</span><span class="spacer"></span><span class="pill">${pagesOf(l)}</span></div>
     <h3 style="margin:6px 0">${U.esc(l.title)}</h3><div class="small muted">${U.esc(l.topic)}</div>
     <div class="small" style="margin-top:8px">Exercises ${p.exDone}/${p.exTotal}${p.exDone ? ` · ⌀ ${Math.round(p.exAvg * 100)}%` : ''}</div><div class="bar"><i style="width:${pct}%"></i></div>
     <div class="small" style="margin-top:6px">Cards ${p.cards.seen}/${p.cards.total}${p.added ? '' : ' · <span class="muted">not in deck</span>'} · drills ${p.drills}</div></a>`;
@@ -95,11 +97,11 @@ function viewLesson(id, tab = 'overview') {
   const l = L(id); if (!l) return viewPlan();
   Store.lesson(id).visited = Date.now(); Store.save();
   const idx = builtIds().indexOf(id), prev = builtIds()[idx - 1], next = builtIds()[idx + 1];
-  const tabs = TABS.filter(([k]) => k !== 'phrases' || (l.phrases && l.phrases.length)).filter(([k]) => k !== 'drill' || (l.drill && l.drill.length)).filter(([k]) => k !== 'exam' || (l.exam && l.exam.length));
+  const tabs = TABS.filter(([k]) => k !== 'vocab' || (l.vocab && l.vocab.length)).filter(([k]) => k !== 'phrases' || (l.phrases && l.phrases.length)).filter(([k]) => k !== 'drill' || (l.drill && l.drill.length)).filter(([k]) => k !== 'exam' || (l.exam && l.exam.length));
   $main().innerHTML = `
-    <div class="row small muted"><a href="#/">Home</a> › <a href="#/plan">Syllabus</a> › ${U.esc(l.plus ? 'Modul 1 Plus' : 'Lektion ' + l.n)} <span class="spacer"></span>
+    <div class="row small muted"><a href="#/">Home</a> › <a href="#/plan">Syllabus</a> › ${U.esc(label(l))} <span class="spacer"></span>
       ${prev ? `<a href="#/lesson/${prev}">← ${prev}</a>` : ''} ${next ? `<a href="#/lesson/${next}">${next} →</a>` : ''}</div>
-    <h1>${U.esc(l.title)}</h1><p class="sub">${U.esc(l.topic)} · Menschen A1.1 Kursbuch p. ${l.pages} · ${l.level}</p>
+    <h1>${U.esc(l.title)}</h1><p class="sub">${U.esc(l.topic)} · ${l.test ? 'covers' : 'Menschen A1.1 Kursbuch'} ${pagesOf(l)}${l.test ? '' : ' + Arbeitsbuch'} · ${l.level}</p>
     <nav class="tabs">${tabs.map(([k, t]) => `<a href="#/lesson/${id}/${k}" class="${k === tab ? 'active' : ''}">${t}</a>`).join('')}</nav>
     <div id="tab"></div>`;
   const T = document.getElementById('tab');
@@ -324,7 +326,7 @@ function viewExam() {
   const skills = ['Hören', 'Lesen', 'Schreiben', 'Sprechen'];
   const bySkill = (s) => all.filter((x) => (x.ex.exam || '').includes(s));
   $main().innerHTML = `<h1>Prüfungstraining</h1>
-    <p class="sub">All four skills, in Goethe format. Right now the tasks only use L1–6 material. A full Start Deutsch 1 mock unlocks at L24 and a Goethe A2 mock at L48.</p>
+    <p class="sub">All four skills, in Goethe format. Right now the tasks use L1–12 material (Kursbuch + Arbeitsbuch). A full Start Deutsch 1 mock unlocks at L24 and a Goethe A2 mock at L48.</p>
     <div class="grid">${['A1', 'A2'].map((k) => { const e = DE.exams[k]; return `<div class="card"><h3>${U.esc(e.name)}</h3>${e.parts.map((p) => `<p class="small"><b>${p.skill}</b> (${p.time}): ${U.esc(p.detail)}</p>`).join('')}<p class="small muted">Pass: ${U.esc(e.pass)}</p></div>`; }).join('')}</div>
     <nav class="tabs">${skills.map((s, i) => `<a href="#" data-skill="${s}" class="${i === 0 ? 'active' : ''}">${s} (${bySkill(s).length})</a>`).join('')}</nav><div id="tab"></div>`;
   const T = document.getElementById('tab');
