@@ -6,7 +6,7 @@ An interactive textbook that follows **Menschen A1.1** (Hueber) and leads on to 
 - **Pimsleur-style audio drills**
 - **Goethe exam training** (Start Deutsch 1 / Goethe-Zertifikat A2)
 
-Built so far: **Lektion 1–12 + Modul 1 & 2 Plus + Probetest L1–12** (all of Menschen A1.1, Kursbuch + Arbeitsbuch). The full 48-lesson syllabus and the 15-week plan are in the app under *Syllabus* and in [`docs/SYLLABUS.md`](docs/SYLLABUS.md).
+Built so far: **Lektion 1–12 + Modul 1–4 Plus + Probetest L1–12** (all of Menschen A1.1, Kursbuch + Arbeitsbuch). The full 48-lesson syllabus and the 15-week plan are in the app under *Syllabus* and in [`docs/SYLLABUS.md`](docs/SYLLABUS.md).
 
 ## Run it (Windows)
 

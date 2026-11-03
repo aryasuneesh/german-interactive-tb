@@ -7,7 +7,7 @@
 
 | Level | Source of truth | Confidence |
 |---|---|---|
-| A1.1 (L1–12) | Your *Menschen A1.1 Kursbuch* (Hueber 2012): Inhalt p.5–7 and text of p.9–47; the full *Arbeitsbuch* (p.1–103: Basistraining, Trainings, Aussprache, Tests, Lernwortschatz, Grammatikübersicht) | Exact |
+| A1.1 (L1–12) | Your *Menschen A1.1 Kursbuch* (Hueber 2012): Inhalt p.5–7 and the full text of p.9–72 (all 12 Lektionen + 4 Modul-Plus sections); the full *Arbeitsbuch* (p.1–103: Basistraining, Trainings, Aussprache, Tests, Lernwortschatz, Grammatikübersicht) | Exact |
 | A1.2–A2.2 (L13–48) | CEFR / Goethe A1 & A2 inventories (*Start Deutsch 1* and *Goethe-Zertifikat A2* Prüfungsziele, Wortlisten) in the order shared by **Menschen**, **Netzwerk neu** (Klett) and **Schritte international Neu** (Hueber) | High for content, approximate for lesson order |
 
 The three most-used DaF course books for adults teach essentially the same A1/A2 grammar core in nearly the same order. They differ mostly in themes and characters. Where they diverge, this plan follows Menschen, because that's what your university uses.
